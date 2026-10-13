@@ -3,6 +3,7 @@ const express = require('express');
 const mongoose = require('mongoose');
 const Product = require('./models/product.model.js');
 const productRoutes = require('./routes/product.route.js');
+const bookRoutes = require('./routes/book.route.js');
 
 
 const app = express()
@@ -12,6 +13,7 @@ app.use(express.urlencoded({ extended: false }))
 
 //routes
 app.use('/api/products', productRoutes)
+app.use('/api/books', bookRoutes)
 
 
 

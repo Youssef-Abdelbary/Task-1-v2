@@ -183,3 +183,247 @@ Do not edit the Product files. Pull requests that change them will be sent back.
 You're expected to use AI tools while building this. That's fine and expected.
 
 But you remain responsible for all of the code you submit. You must be able to explain, for **any line in your controller**, why it's there and what happens if you delete it. We will ask.
+
+---
+
+## API Examples
+
+All book routes are mounted at `/api/books`. Request bodies are JSON (`Content-Type: application/json`).
+
+### Add a book
+
+`POST /api/books`
+
+```json
+{
+  "title": "The Pragmatic Programmer",
+  "author": "Andrew Hunt",
+  "genre": "technology",
+  "publishedYear": 1999,
+  "shelfLocation": "Section C, Shelf 4",
+  "totalCopies": 3,
+  "availableCopies": 2
+}
+```
+
+`201 Created`
+
+```json
+{
+  "_id": "6709a1b4c3d2e10f8a7b4c01",
+  "title": "The Pragmatic Programmer",
+  "author": "Andrew Hunt",
+  "genre": "technology",
+  "publishedYear": 1999,
+  "shelfLocation": "Section C, Shelf 4",
+  "totalCopies": 3,
+  "availableCopies": 2,
+  "isAvailable": true,
+  "createdAt": "2026-10-13T11:42:08.512Z",
+  "updatedAt": "2026-10-13T11:42:08.512Z",
+  "__v": 0
+}
+```
+
+Sending the same `title` and `author` again violates the compound unique index:
+
+`409 Conflict`
+
+```json
+{ "message": "This book already exists" }
+```
+
+A body that breaks a validator, for example `"totalCopies": 0` or a missing `author`:
+
+`400 Bad Request`
+
+```json
+{ "message": "Book validation failed: totalCopies: Total copies must be at least 1" }
+```
+
+### Get all books
+
+`GET /api/books`
+
+`200 OK`
+
+```json
+[
+  {
+    "_id": "6709a1b4c3d2e10f8a7b4c01",
+    "title": "The Pragmatic Programmer",
+    "author": "Andrew Hunt",
+    "genre": "technology",
+    "publishedYear": 1999,
+    "shelfLocation": "Section C, Shelf 4",
+    "totalCopies": 3,
+    "availableCopies": 2,
+    "isAvailable": true,
+    "createdAt": "2026-10-13T11:42:08.512Z",
+    "updatedAt": "2026-10-13T11:42:08.512Z",
+    "__v": 0
+  },
+  {
+    "_id": "6709a1b4c3d2e10f8a7b4c02",
+    "title": "A Short History of Nearly Everything",
+    "author": "Bill Bryson",
+    "genre": "science",
+    "publishedYear": 2003,
+    "totalCopies": 5,
+    "availableCopies": 5,
+    "isAvailable": true,
+    "createdAt": "2026-10-13T11:43:11.004Z",
+    "updatedAt": "2026-10-13T11:43:11.004Z",
+    "__v": 0
+  }
+]
+```
+
+### Get all books, filtered (stretch goal)
+
+`GET /api/books?genre=science&isAvailable=true`
+
+Only the conditions actually present in the query string are applied, so a request with no query string still returns every book.
+
+`200 OK`
+
+```json
+[
+  {
+    "_id": "6709a1b4c3d2e10f8a7b4c02",
+    "title": "A Short History of Nearly Everything",
+    "author": "Bill Bryson",
+    "genre": "science",
+    "publishedYear": 2003,
+    "totalCopies": 5,
+    "availableCopies": 5,
+    "isAvailable": true,
+    "createdAt": "2026-10-13T11:43:11.004Z",
+    "updatedAt": "2026-10-13T11:43:11.004Z",
+    "__v": 0
+  }
+]
+```
+
+### Get the 5 most recently added books (stretch goal)
+
+`GET /api/books/recent`
+
+Returns at most 5 books, newest first. This route is declared before `/:id` in `routes/book.route.js` so that `recent` is not matched as an id.
+
+`200 OK`
+
+```json
+[
+  {
+    "_id": "6709a1b4c3d2e10f8a7b4c02",
+    "title": "A Short History of Nearly Everything",
+    "author": "Bill Bryson",
+    "genre": "science",
+    "publishedYear": 2003,
+    "totalCopies": 5,
+    "availableCopies": 5,
+    "isAvailable": true,
+    "createdAt": "2026-10-13T11:43:11.004Z",
+    "updatedAt": "2026-10-13T11:43:11.004Z",
+    "__v": 0
+  },
+  {
+    "_id": "6709a1b4c3d2e10f8a7b4c01",
+    "title": "The Pragmatic Programmer",
+    "author": "Andrew Hunt",
+    "genre": "technology",
+    "publishedYear": 1999,
+    "shelfLocation": "Section C, Shelf 4",
+    "totalCopies": 3,
+    "availableCopies": 2,
+    "isAvailable": true,
+    "createdAt": "2026-10-13T11:42:08.512Z",
+    "updatedAt": "2026-10-13T11:42:08.512Z",
+    "__v": 0
+  }
+]
+```
+
+### Get one book by id
+
+`GET /api/books/6709a1b4c3d2e10f8a7b4c01`
+
+`200 OK`
+
+```json
+{
+  "_id": "6709a1b4c3d2e10f8a7b4c01",
+  "title": "The Pragmatic Programmer",
+  "author": "Andrew Hunt",
+  "genre": "technology",
+  "publishedYear": 1999,
+  "shelfLocation": "Section C, Shelf 4",
+  "totalCopies": 3,
+  "availableCopies": 2,
+  "isAvailable": true,
+  "createdAt": "2026-10-13T11:42:08.512Z",
+  "updatedAt": "2026-10-13T11:42:08.512Z",
+  "__v": 0
+}
+```
+
+A valid id with no matching book:
+
+`404 Not Found`
+
+```json
+{ "message": "Book not found" }
+```
+
+### Update a book by id
+
+`PUT /api/books/6709a1b4c3d2e10f8a7b4c01`
+
+```json
+{
+  "shelfLocation": "Section A, Shelf 1",
+  "totalCopies": 9
+}
+```
+
+The response is the **updated** document, and the schema validators still run on the update.
+
+`200 OK`
+
+```json
+{
+  "_id": "6709a1b4c3d2e10f8a7b4c01",
+  "title": "The Pragmatic Programmer",
+  "author": "Andrew Hunt",
+  "genre": "technology",
+  "publishedYear": 1999,
+  "shelfLocation": "Section A, Shelf 1",
+  "totalCopies": 9,
+  "availableCopies": 2,
+  "isAvailable": true,
+  "createdAt": "2026-10-13T11:42:08.512Z",
+  "updatedAt": "2026-10-13T11:51:36.889Z",
+  "__v": 0
+}
+```
+
+Updating with `"totalCopies": 0` is rejected:
+
+`400 Bad Request`
+
+```json
+{ "message": "Validation failed: totalCopies: Total copies must be at least 1" }
+```
+
+### Delete a book by id
+
+`DELETE /api/books/6709a1b4c3d2e10f8a7b4c01`
+
+`200 OK`
+
+```json
+{ "message": "Book deleted successfully" }
+```
+
+A following `GET` for the same id returns `404` with `{ "message": "Book not found" }`.
